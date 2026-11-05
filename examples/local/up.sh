@@ -15,7 +15,7 @@ set -eu
 cd "$(dirname "$0")"
 port=${PORT:-2222}
 containerfile=${CONTAINERFILE:-Containerfile}
-name=${NAME:-circuit-certbot}
+name=${CONTAINER_NAME:-circuit-certbot}
 pebble=ghcr.io/letsencrypt/pebble:2.10.1
 dns=ghcr.io/letsencrypt/pebble-challtestsrv:2.10.1
 
