@@ -36,9 +36,11 @@ $podman run -d --name "$name-dns" --network "$name" --network-alias dns "$dns" \
   -defaultIPv4 "$ip" -defaultIPv6 "" -http01 "" -https01 "" -tlsalpn01 "" -doh "" -management "" >/dev/null
 
 # Pebble's own config, but checking HTTP challenges on port 80 like Let's
-# Encrypt does, instead of 5002.
+# Encrypt does, instead of 5002. Pebble also rejects 5% of good nonces by
+# default, to test clients' retries, which failed the example now and then;
+# PEBBLE_WFE_NONCEREJECT=0 turns that off.
 $podman create --name "$name-pebble" --network "$name" --network-alias pebble \
-  -e PEBBLE_VA_NOSLEEP=1 "$pebble" -config /test/config/pebble-config.json -dnsserver dns:8053 >/dev/null
+  -e PEBBLE_VA_NOSLEEP=1 -e PEBBLE_WFE_NONCEREJECT=0 "$pebble" -config /test/config/pebble-config.json -dnsserver dns:8053 >/dev/null
 $podman cp "$name-pebble:/test/config/pebble-config.json" - | tar -xO | sed 's/"httpPort": 5002/"httpPort": 80/' > pebble-config.json
 $podman cp pebble-config.json "$name-pebble:/test/config/pebble-config.json"
 $podman start "$name-pebble" >/dev/null
