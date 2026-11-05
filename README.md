@@ -10,7 +10,7 @@ It's for nginx, HAProxy, Postfix, or anything else that reads a certificate from
 
 ```hcl
 module "certbot" {
-  source = "github.com/conn3xorg/circuit-certbot?ref=v0.1.0"
+  source = "github.com/conn3xorg/circuit-certbot?ref=v0.1.1"
 
   hosts                = { web1 = "203.0.113.10" }
   ssh_private_key_file = "~/.ssh/id_ed25519"
@@ -51,7 +51,7 @@ module "web" {
 }
 
 module "certbot" {
-  source     = "github.com/conn3xorg/circuit-certbot?ref=v0.1.0"
+  source     = "github.com/conn3xorg/circuit-certbot?ref=v0.1.1"
   depends_on = [module.web]
 
   hosts       = { web1 = { address = "203.0.113.10", os = "ubuntu" } }
