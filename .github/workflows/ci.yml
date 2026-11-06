@@ -86,6 +86,28 @@ jobs:
           systemctl is-active "$timer"
           certbot renew --dry-run --no-random-sleep-on-renew --server https://pebble:14000/dir
           EOF
+      # Restarting the container boots systemd again, so the renewal timer
+      # only comes back if it's enabled. The host comes back on a new address
+      # that the test DNS server doesn't know, so Pebble can't reach it for a
+      # dry run, and this checks what a boot can lose instead.
+      - name: Restart the host, then check the certificate and the timer, and plan
+        working-directory: examples/local
+        run: |
+          sudo podman restart circuit-certbot
+          for _ in $(seq 60); do
+            case $(sudo podman exec circuit-certbot systemctl is-system-running 2>/dev/null) in running|degraded) break ;; esac
+            sleep 1
+          done
+          sudo podman exec -i circuit-certbot sh -eu <<'EOF'
+          f=/etc/letsencrypt/live/box/cert.pem
+          openssl x509 -in "$f" -noout -ext subjectAltName | grep -q 'DNS:box.example.test, DNS:www.box.example.test'
+          openssl x509 -in "$f" -noout -checkend 86400
+          timer=$(systemctl list-unit-files 'certbot*.timer' --no-legend | awk '{print $1}')
+          systemctl is-enabled "$timer"
+          systemctl is-active "$timer"
+          certbot certificates --cert-name box | grep -q 'VALID'
+          EOF
+          conn3x plan -detailed-exitcode
       - name: Clean up
         if: always()
         working-directory: examples/local
